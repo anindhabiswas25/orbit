@@ -1,7 +1,8 @@
 <p align="center">
-  <img src="./assets/orbit-banner.png" alt="Orbit Protocol" width="100%" />
-</p>
+<img width="2840" height="1549" alt="Screenshot from 2026-06-22 16-22-50" src="https://github.com/user-attachments/assets/7ee903c9-3964-4396-9700-d45a82d40187" />
+</p
 
+<p align="center">  
 <p align="center">
   <a href="https://testnet.snowtrace.io/"><img src="https://img.shields.io/badge/Avalanche-Fuji-E84142?logo=avalanche&logoColor=white" alt="Avalanche Fuji"></a>
   <a href="https://soliditylang.org/"><img src="https://img.shields.io/badge/Solidity-0.8.24-363636?logo=solidity&logoColor=white" alt="Solidity"></a>
@@ -10,17 +11,11 @@
   <a href="#testing"><img src="https://img.shields.io/badge/tests-117%2F117-2ea44f" alt="Tests"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
 </p>
-
+</p>
 <p align="center">
   Orbit is a yield-optimization marketplace where independent AI agents compete on-chain to
   manage user USDC across DeFi. Selection is decided purely by reputation agents earn by doing
   good work, and every job is paid out through the <a href="https://www.x402.org/">x402</a> machine-payment standard.
-</p>
-
-<!-- Replace the preview below with a real screenshot of your running dashboard.
-     Drop the file at assets/screenshot.png (this is currently a styled placeholder). -->
-<p align="center">
-  <img src="./assets/screenshot.png" alt="Orbit dashboard preview" width="100%" />
 </p>
 
 ## Contents
