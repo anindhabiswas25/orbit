@@ -1,0 +1,26 @@
+{
+  "name": "orbit-orchestrator",
+  "version": "1.0.0",
+  "description": "Orbit Protocol LLM Orchestrator Agent — payment authority and x402 settler",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && cp -r src/chain/abis dist/chain/abis",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "test": "jest --forceExit"
+  },
+  "dependencies": {
+    "openai": "^4.50.0",
+    "ethers": "^6.11.0",
+    "dotenv": "^16.0.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "@types/jest": "^29.0.0"
+  }
+}
