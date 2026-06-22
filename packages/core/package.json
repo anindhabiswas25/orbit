@@ -1,0 +1,16 @@
+{
+  "name": "@orbit/core",
+  "version": "1.0.0",
+  "description": "Orbit Protocol shared core — chain client, agent loop, credentials. Internal use only.",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist/"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "ethers": "^6.11.0"
+  }
+}
