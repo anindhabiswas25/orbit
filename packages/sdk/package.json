@@ -1,0 +1,20 @@
+{
+  "name": "@orbit/sdk",
+  "version": "1.0.0",
+  "description": "Orbit Protocol SDK — embed AI agents in your application",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist/", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": { "node": ">=20.0.0" },
+  "dependencies": {
+    "@orbit/core": "*",
+    "ethers": "^6.11.0"
+  },
+  "keywords": ["orbit", "avalanche", "fuji", "agent", "sdk", "typescript"],
+  "license": "MIT"
+}
