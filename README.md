@@ -1,231 +1,189 @@
-<div align="center">
+<p align="center">
+  <img src="./assets/orbit-banner.png" alt="Orbit Protocol" width="100%" />
+</p>
 
-<img src="./assets/avalanche-logo.png" alt="Avalanche" width="110" />
+<p align="center">
+  <a href="https://testnet.snowtrace.io/"><img src="https://img.shields.io/badge/Avalanche-Fuji-E84142?logo=avalanche&logoColor=white" alt="Avalanche Fuji"></a>
+  <a href="https://soliditylang.org/"><img src="https://img.shields.io/badge/Solidity-0.8.24-363636?logo=solidity&logoColor=white" alt="Solidity"></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node-%E2%89%A520-339933?logo=node.js&logoColor=white" alt="Node"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
+  <a href="#testing"><img src="https://img.shields.io/badge/tests-117%2F117-2ea44f" alt="Tests"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
+</p>
 
-# 🛰️ Orbit Protocol
+<p align="center">
+  Orbit is a yield-optimization marketplace where independent AI agents compete on-chain to
+  manage user USDC across DeFi. Selection is decided purely by reputation agents earn by doing
+  good work, and every job is paid out through the <a href="https://www.x402.org/">x402</a> machine-payment standard.
+</p>
 
-### An Open, Competitive AI-Agent Yield Marketplace on Avalanche
+<!-- Replace the preview below with a real screenshot of your running dashboard.
+     Drop the file at assets/screenshot.png (this is currently a styled placeholder). -->
+<p align="center">
+  <img src="./assets/screenshot.png" alt="Orbit dashboard preview" width="100%" />
+</p>
 
-*Autonomous AI agents compete — on-chain — for the right to manage your USDC across DeFi,
-earning reputation and getting paid per job through the **x402** machine-payment standard.*
+## Contents
 
-<!-- ─────────────────────────────────────────────────────────────
-     👉  Add your product screenshot below (drop it at assets/screenshot.png)
-     ───────────────────────────────────────────────────────────── -->
-<img src="./assets/screenshot.png" alt="Orbit Protocol — Live Dashboard" width="100%" />
+- [What it does](#what-it-does)
+- [The problem](#the-problem)
+- [Architecture](#architecture)
+- [How a cycle works](#how-a-cycle-works)
+- [Repository layout](#repository-layout)
+- [Smart contracts](#smart-contracts)
+- [Deployed addresses (Fuji)](#deployed-addresses-fuji)
+- [Getting started](#getting-started)
+- [Running the live stack](#running-the-live-stack)
+- [CLI](#cli)
+- [SDK](#sdk)
+- [Backend API](#backend-api)
+- [Frontend](#frontend)
+- [Testing](#testing)
+- [Security notes](#security-notes)
+- [Tech stack](#tech-stack)
+- [License](#license)
 
-<br/>
+## What it does
 
-[![Avalanche](https://img.shields.io/badge/Avalanche-Fuji_Testnet-E84142?logo=avalanche&logoColor=white)](https://testnet.snowtrace.io/)
-[![Solidity](https://img.shields.io/badge/Solidity-0.8.24-363636?logo=solidity&logoColor=white)](https://soliditylang.org/)
-[![Node](https://img.shields.io/badge/Node-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![x402](https://img.shields.io/badge/Payments-x402-6E56CF)](https://www.x402.org/)
-[![Tests](https://img.shields.io/badge/contract_tests-117%2F117_passing-2ea44f)](#-testing)
-[![License](https://img.shields.io/badge/License-MIT-blue)](./LICENSE)
+Orbit runs an open market for two kinds of autonomous agent:
 
-</div>
+| Agent | Responsibility | Earns |
+| --- | --- | --- |
+| Scout | Reads the live APY of every connected protocol and posts the best one on-chain. | Reputation + an x402 micro-payment per verified job. |
+| Executor | Reads the winning protocol and rebalances the vault into it. | Reputation + an x402 payment scaled by vault size. |
 
----
+A neutral on-chain **engine** assigns every job — agents cannot assign work to themselves. An
+off-chain **orchestrator** verifies the result, decides whether to pay (LLM with a deterministic
+rule fallback), releases the payment, and records it. User funds stay deposited in the
+best-yielding protocol the entire time.
 
-## 📖 Table of Contents
+## The problem
 
-- [📌 Overview](#-overview)
-- [🧩 Why Avalanche + AI Agents](#-why-avalanche--ai-agents)
-- [⚙️ How It Works](#️-how-it-works)
-- [🏗 Architecture](#-architecture)
-- [💸 The x402 Payment Loop](#-the-x402-payment-loop)
-- [📜 Smart Contracts](#-smart-contracts)
-- [🚀 Deployed Contracts (Fuji)](#-deployed-contracts-fuji)
-- [📁 Project Structure](#-project-structure)
-- [⚡ Quick Start](#-quick-start)
-- [🖥 CLI — Install & Usage](#-cli--install--usage)
-- [📦 SDK — Install & Usage](#-sdk--install--usage)
-- [📡 Backend API Reference](#-backend-api-reference)
-- [🌐 Frontend & Developer Portal](#-frontend--developer-portal)
-- [🧪 Testing](#-testing)
-- [🔐 Security Notes](#-security-notes)
-- [🛠 Tech Stack](#-tech-stack)
-- [📈 Roadmap](#-roadmap)
-- [📄 License](#-license)
+Most "yield optimizers" are a single team's closed strategy: you can't see how decisions are made,
+there's one point of failure, and there's no competitive pressure to actually find the best rate.
 
----
+Orbit replaces that with a market. Anyone can deploy an agent. Agents are selected on merit —
+their on-chain reputation, earned one verified job at a time — and are paid per job rather than
+trusted by default. Every assignment, rebalance, and payment is an on-chain event, so the whole
+system is auditable.
 
-## 📌 Overview
-
-**Orbit Protocol** turns yield optimization into an open competition between autonomous AI agents.
-
-Today, "yield optimizers" are closed black boxes — a single team's strategy, a single point of
-failure, and no way to know if you're actually getting the best rate. Orbit flips that model:
-
-> **Anyone can deploy an AI agent.** Agents compete to find the best DeFi yield and to execute
-> rebalances. Selection is driven purely by **on-chain reputation** they earn by doing good work.
-> Every action leaves an audit trail, every job is paid for through the **x402** standard, and
-> user funds are **always earning** — never idle.
-
-There are two classes of agent:
-
-| Agent | Job | Reward |
-|-------|-----|--------|
-| 🔭 **Scout** | Survey every connected DeFi protocol, find the best APY, post the signal on-chain | +reputation & x402 micro-payment per verified job |
-| ⚡ **Executor** | Read the best-protocol signal and atomically rebalance the vault to it | +reputation & x402 payment scaled by vault size |
-
-A neutral **on-chain engine** assigns jobs (agents can *never* self-assign), an off-chain
-**LLM-powered orchestrator** verifies the work and authorizes payment, and the whole loop is
-observable from a live dashboard.
-
----
-
-## 🧩 Why Avalanche + AI Agents
-
-- **Fast & cheap finality** — Avalanche C-Chain confirms in ~1–2s with sub-cent gas, which is what
-  makes per-job machine payments and frequent rebalances economically viable.
-- **EVM-native DeFi** — Orbit plugs directly into **Aave V3** on Fuji (live supply rate) plus
-  pluggable adapters (Benqi, mock competitive pools) behind one `IYieldAdapter` interface.
-- **Agentic future** — autonomous agents need (1) a trustless way to be *selected* on merit and
-  (2) a way to *get paid* without humans in the loop. Orbit provides both: reputation on-chain,
-  payments via **x402**.
-
----
-
-## ⚙️ How It Works
-
-```
-1.  A user deposits USDC into the YieldVault  →  receives shares (ERC-4626 style valuation).
-2.  The engine opens a SCOUT job and assigns it to the highest-reputation eligible scout.
-3.  The scout reads getAPY() from every adapter, picks the winner, and writes it on-chain.
-4.  If the winner ≠ the currently-active protocol, the engine opens an EXECUTOR job.
-5.  The executor calls the engine, which ATOMICALLY rebalances the vault to the new protocol.
-6.  The orchestrator verifies each job (LLM + rule fallback), then pays the agent via x402
-    out of the FeePool and records it in the PaymentLedger.
-7.  Reputation updates: +1 for good work, penalties & stake-slashing for bad / late work.
-8.  User funds keep compounding in the best protocol the whole time — never idle.
-```
-
-**Reputation rules:** start at `0` → `+1` success, `−1` timeout, `−2` invalid result. Hit `−5` →
-agent paused + 1 USDC slashed. Hit `−10` → banned, full stake slashed, wallet permanently banned.
-Below 3 agents of a type, a warm-up floor keeps the market liquid.
-
----
-
-## 🏗 Architecture
+## Architecture
 
 ```mermaid
 flowchart TB
-    subgraph User["👤 User / Developer"]
-        U[Deposit / Withdraw USDC]
-        DEV[Deploy & Run Agents]
+    subgraph offchain_user["Users & developers"]
+        U["Deposit / withdraw USDC"]
+        DEV["Deploy & run agents (CLI / SDK)"]
     end
 
-    subgraph Agents["🤖 AI Agent Fleet (off-chain)"]
-        S1[🔭 Scout A]
-        S2[🔭 Scout B]
-        E1[⚡ Executor A]
-        E2[⚡ Executor B]
+    subgraph agents["Agent fleet — off-chain"]
+        S["Scouts"]
+        E["Executors"]
     end
 
-    subgraph Chain["⛓️ Avalanche Fuji — Smart Contracts"]
-        VAULT[YieldVault]
-        ENGINE[AgentSelectionEngine]
-        REG[AgentRegistry]
-        YREG[YieldRegistry]
-        FEE[FeePool]
-        LEDGER[PaymentLedger]
-        subgraph Adapters["Yield Adapters (IYieldAdapter)"]
-            AAVE[Aave V3]
-            BENQI[Benqi]
-            MA[MockPool A]
-            MB[MockPool B]
-        end
+    subgraph chain["Avalanche Fuji — contracts"]
+        VAULT["YieldVault"]
+        ENGINE["AgentSelectionEngine"]
+        REG["AgentRegistry"]
+        YREG["YieldRegistry"]
+        FEE["FeePool"]
+        LEDGER["PaymentLedger"]
+        ADAPT["Yield adapters: Aave V3 · Benqi · MockPools"]
     end
 
-    subgraph Orchestrator["🧠 LLM Orchestrator (off-chain)"]
-        VER[Verification Engine]
-        LLM[Groq LLM + Rule Fallback]
-        PAY[x402 Payment Executor]
-        GUARD[Deadline / Anomaly Guards]
+    subgraph orch["Orchestrator — off-chain"]
+        VER["Verification"]
+        LLM["LLM + rule fallback"]
+        PAY["x402 payment executor"]
+        GUARD["Deadline / anomaly guards"]
     end
 
-    subgraph Surfaces["🖥️ Surfaces"]
-        API[Backend API]
-        FE[Next.js Dashboard]
-        CLI[orbit CLI]
-        SDK["@orbit/sdk"]
+    subgraph surfaces["Surfaces"]
+        API["Backend API"]
+        FE["Next.js dashboard"]
     end
 
     U --> VAULT
-    DEV --> CLI --> REG
-    DEV --> SDK --> REG
-    ENGINE -->|assigns jobs| S1 & S2 & E1 & E2
-    S1 & S2 -->|best APY signal| YREG
-    E1 & E2 -->|rebalance| ENGINE --> VAULT --> Adapters
+    DEV --> REG
+    ENGINE -->|assigns jobs| S & E
+    S -->|best-APY signal| YREG
+    E -->|rebalance| ENGINE --> VAULT --> ADAPT
     REG -.reputation.-> ENGINE
-    ENGINE -->|JobCompleted event| VER --> LLM --> PAY --> FEE --> S1
+    ENGINE -->|JobCompleted| VER --> LLM --> PAY --> FEE
     PAY --> LEDGER
     GUARD -.->|expire stuck jobs| ENGINE
-    API --> Chain
+    API --> chain
     FE --> API
 ```
 
-**Layered build order** (contracts are the source of truth):
+The system is built in layers, with the contracts as the source of truth:
+
+1. **Contracts** — the rules of the marketplace (vault, registry, engine, fee/ledger, adapters).
+2. **Agents & backend** — scout/executor processes plus a read-only API server.
+3. **Orchestrator** — verification, the pay/reject decision, x402 payouts, and self-healing guards.
+4. **CLI & SDK** — how a developer registers and operates an agent.
+5. **Frontend** — a user dashboard and a developer earnings portal.
+
+## How a cycle works
+
+1. A user deposits USDC into `YieldVault` and receives shares (valuation is ERC-4626 style:
+   `totalAssets = idle USDC + current adapter balance`).
+2. The engine opens a scout job and assigns it to the highest-reputation eligible scout.
+3. The scout reads `getAPY()` from every adapter, picks the winner, and writes it to `YieldRegistry`.
+4. If the winner differs from the active protocol, the engine opens an executor job.
+5. The executor calls `engine.completeExecutorJob(jobId, newAdapter)`; the engine performs the
+   vault rebalance and the rebalance-log **atomically** — funds are never stranded mid-move.
+6. The orchestrator catches the `JobCompleted` event, re-verifies the work on-chain, decides
+   `PAY` / `REJECT` / `ESCALATE`, releases USDC from `FeePool`, records it in `PaymentLedger`,
+   and POSTs an x402 receipt to the agent.
+7. Reputation updates: `+1` for good work, penalties and stake-slashing for late or invalid work.
+
+**Reputation:** agents start at `0`. `+1` success, `−1` timeout, `−2` invalid result. At `−5` the
+agent is paused and 1 USDC is slashed; at `−10` it is banned and its full stake is slashed.
+Selection is winner-takes-all — the single best eligible agent wins the job and its fee.
+
+## Repository layout
 
 ```
-Layer 1  ⛓️  Blockchain      — Solidity contracts, the rules of the marketplace
-Layer 2  🤖  Agents+Backend  — scout/executor processes + read-only API server
-Layer 3  🧠  Orchestrator    — verification, LLM decisions, x402 payouts, guards
-Layer 4  🧰  CLI + SDK       — how developers register & run their own agents
-Layer 5  🌐  Frontend        — user dashboard + developer earnings portal
+orbit/
+├─ contracts/          Solidity contracts, adapters, and the IYieldAdapter interface
+├─ test/               Hardhat unit + integration tests (117 passing)
+├─ scripts/            Deploy, setup, agent-registration, and demo keepers
+├─ agents/             Scout & executor processes, shared utils, x402 agent server
+├─ backend/            Express read-only API (vault / agents / jobs / events)
+├─ orchestrator/       TypeScript orchestrator: chain, llm, verification, payment, guards, x402
+├─ packages/           npm-workspace monorepo:
+│  ├─ core/            @orbit/core — encrypted credentials, chain client, agent runner
+│  ├─ cli/             @orbit/cli  — the `orbit` command
+│  └─ sdk/             @orbit/sdk  — programmatic agent SDK
+├─ frontend/           Next.js monitoring dashboard
+├─ landing/            Marketing site + developer earnings portal
+├─ docs/              Setup, monitoring, and flow-by-flow test guides
+├─ e2e/                Local end-to-end harness
+└─ deployed-addresses.json
 ```
 
----
-
-## 💸 The x402 Payment Loop
-
-Orbit uses the **[x402](https://www.x402.org/)** machine-payment standard so agents get paid
-*per job*, with no human in the loop:
-
-1. Engine emits `JobCompleted(jobId, agent, devWallet, payment, type)`.
-2. Orchestrator's **Verification Engine** re-checks the work on-chain (did the scout report the
-   real best APY? did the executor actually move funds to the winning pool?).
-3. A **Groq LLM** (`llama-3.1-8b-instant`) decides `PAY` / `REJECT` / `ESCALATE`, with a
-   deterministic **rule system** as fallback so a payout never hangs on the LLM.
-4. On `PAY`, `FeePool.payAgent()` releases USDC and `PaymentLedger.settle()` records it; the
-   orchestrator POSTs an **x402 receipt** to the agent's endpoint.
-5. The developer who owns the agent sees the settlement on the **Earnings** page (read straight
-   from `PaymentLedger`).
-
-Payment is **merit-based / winner-takes-all**: the single highest-reputation eligible agent wins
-the job and the fee — not a round-robin split.
-
----
-
-## 📜 Smart Contracts
+## Smart contracts
 
 | Contract | Responsibility |
-|----------|----------------|
-| `YieldVault.sol` | User USDC vault. Mints/burns shares on ERC-4626-style live valuation (`totalAssets = idle + adapter balance`). 0.10% deposit fee → FeePool. Engine-only `rebalance()`. |
-| `AgentRegistry.sol` | Agent registration, stake locking, reputation, slashing, warm-up phase, permanent bans. |
-| `AgentSelectionEngine.sol` | Neutral job assignment by reputation, scout/executor job lifecycle, atomic rebalance, deadline expiry. |
-| `YieldRegistry.sol` | On-chain message bus — scouts write the best protocol, executors read it; logs rebalance history. |
-| `FeePool.sol` | Collects vault fees, disburses agent payments. |
-| `PaymentLedger.sol` | Immutable per-job settlement record keyed by `jobId` (powers the Earnings dashboard). |
-| `interfaces/IYieldAdapter.sol` | 5-function adapter ABI: `deposit`, `withdraw`, `getAPY`, `getBalance`, `protocolName`. |
-| `adapters/AaveAdapter.sol` | **Live** Aave V3 Fuji integration — real on-chain supply rate. |
-| `adapters/BenqiAdapter.sol` | Benqi adapter (placeholder on Fuji — no Benqi testnet). |
-| `adapters/MockPoolA/B.sol` | Competitive mock pools with **real time-based yield accrual** for demos. |
+| --- | --- |
+| `YieldVault` | Holds user USDC, mints/burns shares on live valuation, charges a 0.10% deposit fee, routes funds to the active adapter. `rebalance()` is engine-only. |
+| `AgentRegistry` | Registration, stake locking, reputation, slashing, warm-up phase, permanent bans. |
+| `AgentSelectionEngine` | Neutral job assignment by reputation, the scout/executor job lifecycle, atomic rebalance, deadline expiry. |
+| `YieldRegistry` | On-chain message bus — scouts write the best protocol, executors read it; stores rebalance history. |
+| `FeePool` | Collects vault fees and disburses agent payments. |
+| `PaymentLedger` | Immutable per-job settlement record, keyed by `jobId` (powers the earnings view). |
+| `IYieldAdapter` | Adapter interface: `deposit`, `withdraw`, `getAPY`, `getBalance`, `protocolName`. |
+| `AaveAdapter` | Live Aave V3 Fuji integration — reads the real on-chain supply rate. |
+| `BenqiAdapter` | Benqi adapter (placeholder on Fuji — no Benqi testnet). |
+| `MockPoolA` / `MockPoolB` | Competitive mock pools with real time-based yield accrual for demos. |
 
-> ℹ️ **Design note:** executors never call `vault.rebalance()` directly (it's `onlyEngine`). They
-> call `engine.completeExecutorJob(jobId, newAdapter)` and the engine performs the rebalance +
-> rebalance-log **atomically**, so funds can never be stranded mid-move.
+## Deployed addresses (Fuji)
 
----
-
-## 🚀 Deployed Contracts (Fuji)
-
-**Network:** Avalanche Fuji C-Chain · **Chain ID:** `43113` · **Explorer:** [testnet.snowtrace.io](https://testnet.snowtrace.io/)
+Network: Avalanche Fuji C-Chain · Chain ID `43113` · Explorer: [testnet.snowtrace.io](https://testnet.snowtrace.io/)
 
 | Contract | Address |
-|----------|---------|
+| --- | --- |
 | FeePool | [`0xF9Dd4c012a5115d4338F7CEe541b20C584c95Fbe`](https://testnet.snowtrace.io/address/0xF9Dd4c012a5115d4338F7CEe541b20C584c95Fbe) |
 | AgentRegistry | [`0xd9F743a8b21565Aa3fD9832B04f3819F8e49E657`](https://testnet.snowtrace.io/address/0xd9F743a8b21565Aa3fD9832B04f3819F8e49E657) |
 | YieldRegistry | [`0x495fD47b66c11aD6196755B5b771e78861Dc6E1E`](https://testnet.snowtrace.io/address/0x495fD47b66c11aD6196755B5b771e78861Dc6E1E) |
@@ -236,290 +194,182 @@ the job and the fee — not a round-robin split.
 | MockPoolA | [`0x3C771A690fE6026f3b3367c73964dc0642D387F0`](https://testnet.snowtrace.io/address/0x3C771A690fE6026f3b3367c73964dc0642D387F0) |
 | MockPoolB | [`0x1874Af2bF8BE0A327753EAd477B91e1F37CD1c45`](https://testnet.snowtrace.io/address/0x1874Af2bF8BE0A327753EAd477B91e1F37CD1c45) |
 | PaymentLedger | [`0x1f297319D2B91BEd549Eef7a069f22fD5b364D5A`](https://testnet.snowtrace.io/address/0x1f297319D2B91BEd549Eef7a069f22fD5b364D5A) |
-| USDC (Circle native testnet) | [`0x5425890298aed601595a70AB815c96711a31Bc65`](https://testnet.snowtrace.io/address/0x5425890298aed601595a70AB815c96711a31Bc65) |
+| USDC (Circle testnet) | [`0x5425890298aed601595a70AB815c96711a31Bc65`](https://testnet.snowtrace.io/address/0x5425890298aed601595a70AB815c96711a31Bc65) |
 
-> Need testnet funds? Get AVAX from the [Avalanche faucet](https://faucet.avax.network/) and
-> USDC from [faucet.circle.com](https://faucet.circle.com/).
+Testnet funds: AVAX from the [Avalanche faucet](https://faucet.avax.network/), USDC from [faucet.circle.com](https://faucet.circle.com/).
 
----
+## Getting started
 
-## 📁 Project Structure
-
-```
-orbit/
-├── contracts/            ⛓️  Solidity contracts + adapters + interfaces
-│   ├── adapters/             Aave / Benqi / MockPool yield adapters
-│   ├── interfaces/           IYieldAdapter
-│   └── *.sol                 Vault, Registry, Engine, FeePool, PaymentLedger…
-├── test/                 🧪  Hardhat unit + integration tests (117 passing)
-├── scripts/              🛠️  Deploy, setup, agent-registration, demo keepers
-├── agents/               🤖  Scout & Executor processes + x402 agent server
-│   ├── scout/                index + smart/momentum/alpha variants
-│   ├── executor/             index + smart/adaptive variants
-│   └── shared/               contracts, logger, retry, x402 client, pollers
-├── backend/              📡  Express read-only API (vault/agents/jobs/events)
-├── orchestrator/         🧠  TypeScript LLM orchestrator
-│   └── src/                  chain · llm · verification · payment · guards · x402
-├── packages/             🧰  npm-workspace TypeScript monorepo
-│   ├── core/                 @orbit/core  — credentials, chain, agent runner
-│   ├── cli/                  @orbit/cli   — the `orbit` command
-│   └── sdk/                  @orbit/sdk   — programmatic agent SDK
-├── frontend/             🌐  Next.js monitoring dashboard
-├── landing/              🪄  Marketing site + developer earnings portal
-├── docs/                 📚  Setup + monitoring + flow-by-flow test guides
-├── e2e/                  🔁  Local end-to-end harness
-├── deployed-addresses.json   📍  Live Fuji addresses (source of truth)
-└── hardhat.config.js
-```
-
----
-
-## ⚡ Quick Start
-
-### Prerequisites
-
-- **Node.js ≥ 20** and **npm ≥ 9**
-- A funded Fuji wallet (AVAX for gas + Circle USDC) if you want to transact live
-- *(optional)* a [Groq](https://groq.com/) API key for the LLM orchestrator
-
-### 1 · Clone & install
+**Requirements:** Node.js ≥ 20, npm ≥ 9, a funded Fuji wallet for live transactions, and
+optionally a [Groq](https://groq.com/) API key for the orchestrator's LLM.
 
 ```bash
 git clone https://github.com/anindhabiswas25/orbit.git
 cd orbit
 npm install
+
+cp .env.example .env          # set FUJI_RPC_URL, PRIVATE_KEY, (GROQ_API_KEY)
+
+npm run compile               # compile contracts
+npm test                      # 117/117 passing
 ```
 
-### 2 · Configure environment
+To exercise the entire deposit → scout → rebalance → payout loop on a local Hardhat node with no
+RPC required:
 
 ```bash
-cp .env.example .env
-# Fill in FUJI_RPC_URL and your PRIVATE_KEY (and GROQ_API_KEY for the orchestrator)
+npm run test:e2e
 ```
 
-### 3 · Compile & test the contracts
+## Running the live stack
+
+Against the deployed Fuji contracts, in four terminals:
 
 ```bash
-npm run compile
-npm test                 # 117/117 passing
+npm run backend               # read-only API on :4000
+node scripts/run-4-agents.js  # 2 scouts + 2 executors with x402 endpoints
+cd orchestrator && npm run build && node dist/index.js   # verification + payouts on :5000
+npm run demo                  # drive a rebalance cycle
 ```
 
-### 4 · Run the full live stack (against deployed Fuji contracts)
+Open the dashboard (below) to watch agents compete, reputation move, and payouts settle.
+
+## CLI
+
+`@orbit/cli` lets a developer register and operate an agent without writing code. Credentials are
+encrypted at rest (AES-256-GCM + PBKDF2) under `~/.orbit/`.
 
 ```bash
-# Terminal 1 — read-only API on :4000
-npm run backend
-
-# Terminal 2 — the agent fleet (2 scouts + 2 executors, x402 endpoints)
-node scripts/run-4-agents.js
-
-# Terminal 3 — the LLM orchestrator (verification + x402 payouts) on :5000
-cd orchestrator && npm run build && node dist/index.js
-
-# Terminal 4 — drive a demo rebalance cycle
-npm run demo
-```
-
-Then open the dashboard (see [Frontend](#-frontend--developer-portal)) to watch agents compete,
-reputation move, and x402 payouts settle in real time.
-
-> 💡 Prefer a zero-RPC local run? `npm run test:e2e` spins up a Hardhat node and exercises the
-> entire deposit → scout → rebalance → payout loop end-to-end.
-
----
-
-## 🖥 CLI — Install & Usage
-
-The `orbit` CLI lets a developer register and operate an agent without writing any code.
-
-### Install
-
-```bash
-# From the repo (workspace build)
 npm run build:packages
 npm link            # exposes the global `orbit` command
-# …or run directly without linking:
-npm run orbit -- <command>
+# or: npm run orbit -- <command>     (run without linking)
 ```
 
 ```bash
-# Or install the package directly
-npm install -g @orbit/cli
+orbit setup        # create an encrypted local agent keystore
+orbit import       # import an existing private key
+orbit register     # stake and register on-chain (scout or executor)
+orbit run          # start the agent loop — listens for jobs and completes them
+orbit status       # vault balance, active protocol, live APY
+orbit agents       # reputation leaderboard
+orbit jobs         # recent jobs and their status
+orbit earnings     # your agent's x402 payouts (from PaymentLedger)
+orbit switch       # switch the active agent profile
+orbit deregister   # exit the market and unlock your stake
 ```
 
-### Commands
+## SDK
 
-```bash
-orbit setup                 # interactive: create an encrypted local agent keystore
-orbit import                # import an existing private key (AES-256-GCM at ~/.orbit)
-orbit register              # stake + register your agent on-chain (scout or executor)
-orbit run                   # start the agent loop (listens for jobs, does the work)
-orbit status                # vault balance, active protocol, live APY
-orbit agents                # leaderboard of agents by reputation
-orbit jobs                  # recent jobs and their status
-orbit earnings              # your agent's x402 payouts (from PaymentLedger)
-orbit switch                # switch the active agent profile
-orbit deregister            # exit the market and unlock your stake
-```
-
-Credentials are encrypted at rest (AES-256-GCM + PBKDF2) under `~/.orbit/` — your private key
-never touches the chain config or logs.
-
----
-
-## 📦 SDK — Install & Usage
-
-For programmatic control, `@orbit/sdk` wraps the same core in a typed API.
-
-### Install
+`@orbit/sdk` wraps the same `@orbit/core` in a typed API.
 
 ```bash
 npm install @orbit/sdk
 ```
 
-### Example
-
 ```typescript
 import { OrbitSDK } from "@orbit/sdk";
 
-// One-time: create & encrypt an agent identity
+// One-time: create and encrypt an agent identity
 const sdk = await OrbitSDK.setup({ name: "MyScout", type: "scout" });
 
-// Later: load the existing identity
+// Later: load it, register on-chain, and start competing
 const agent = await OrbitSDK.load("MyScout");
-
-// Register on-chain (stakes USDC, joins the marketplace)
 await agent.register();
-
-// Start competing — listens for assigned jobs and completes them
 await agent.run();
 
-// Inspect state
 const status   = await agent.getVaultStatus();
 const jobs     = await agent.getRecentJobs();
 const earnings = await agent.getEarnings();
-console.log(status, jobs, earnings);
 ```
 
-The SDK and CLI share `@orbit/core`, so an agent built either way behaves identically on-chain.
+## Backend API
 
----
-
-## 📡 Backend API Reference
-
-Read-only Express server (default `:4000`) with a 5-second cache. All chain reads are isolated in
+Read-only Express server (default `:4000`) with a 5-second cache; all chain reads are isolated in
 `services/chain.js`.
 
 | Method | Endpoint | Returns |
-|--------|----------|---------|
+| --- | --- | --- |
 | `GET` | `/api/status` | Vault balance, active protocol, current APY |
 | `GET` | `/api/protocols` | Every adapter's APY, sorted descending |
 | `GET` | `/api/agents?type=scout\|executor` | Agents ranked by reputation |
 | `GET` | `/api/jobs?limit=20` | Recent jobs and statuses |
 | `GET` | `/api/events?limit=20` | Rebalance history |
-| `POST` | `/api/demo/set-apy` | `{ pool, apy }` — nudge a MockPool APY to trigger a live rebalance |
+| `POST` | `/api/demo/set-apy` | `{ pool, apy }` — nudge a MockPool APY to trigger a rebalance |
 | `GET` | `/health` | `{ ok: true }` |
 
----
+## Frontend
 
-## 🌐 Frontend & Developer Portal
-
-Two surfaces, both polling the API live:
-
-- **`frontend/`** — a Next.js 14 monitoring dashboard (dark theme): vault status, APY leaderboard,
-  agent-reputation leaderboard, live job feed, rebalance history, and a demo panel that sets a
-  MockPool APY on-chain to trigger a real rebalance.
+- **`frontend/`** — Next.js monitoring dashboard: vault status, APY leaderboard, agent-reputation
+  leaderboard, live job feed, rebalance history, and a demo panel that sets a MockPool APY
+  on-chain to trigger a real rebalance.
 
   ```bash
-  cd frontend
-  npm install
+  cd frontend && npm install
   echo "NEXT_PUBLIC_API_URL=http://localhost:4000" > .env.local
-  npm run dev        # http://localhost:3000
+  npm run dev      # http://localhost:3000
   ```
 
-- **`landing/`** — the marketing site + **developer earnings portal** (`/developers`): connect an
-  agent wallet to see registration status, completed jobs, and x402 settlements pulled straight
-  from `PaymentLedger`.
+- **`landing/`** — marketing site plus the developer earnings portal at `/developers`: connect an
+  agent wallet to see registration status, completed jobs, and x402 settlements read straight from
+  `PaymentLedger`.
 
   ```bash
-  cd landing
-  npm install
-  npm run dev        # http://localhost:3000
+  cd landing && npm install && npm run dev
   ```
 
----
+## Testing
 
-## 🧪 Testing
-
-| Suite | What it covers | Result |
-|-------|----------------|--------|
-| Contract unit tests | Registry, Engine, FeePool, YieldRegistry, Vault, Adapters | ✅ |
-| Contract integration | Full deposit → scout → rebalance → payout cycle, yield accrual, slashing | ✅ |
-| **Total (Hardhat)** | | **117 / 117 passing** |
-| Orchestrator tests | Amount calc, decision parsing, receipt building, E2E flow | ✅ |
-| Package tests | Credential encrypt round-trip, chain client | ✅ (`node:test`) |
-| Local e2e harness | Hardhat node, real txs, full loop | ✅ |
+| Suite | Coverage | Status |
+| --- | --- | --- |
+| Contract unit | Registry, engine, fee pool, registry bus, vault, adapters | passing |
+| Contract integration | Full deposit → scout → rebalance → payout cycle, yield accrual, slashing | passing |
+| Hardhat total | | **117 / 117** |
+| Orchestrator | Amount calc, decision parsing, receipt building, E2E flow | passing |
+| Packages | Credential round-trip, chain client (`node:test`) | passing |
+| Local e2e | Hardhat node, real transactions, full loop | passing |
 
 ```bash
-npm test               # all Hardhat contract tests
-npm run test:unit      # unit only
+npm test                  # all Hardhat contract tests
+npm run test:unit
 npm run test:integration
-npm run test:packages  # @orbit/core tests
-npm run test:e2e       # full local end-to-end
+npm run test:packages
+npm run test:e2e
 ```
 
----
+## Security notes
 
-## 🔐 Security Notes
+This is a testnet build — reviewed informally, not production-hardened.
 
-This is a **testnet hackathon build** — audited informally, not production-hardened.
+- Vault deposit/withdraw/rebalance are `nonReentrant` and follow checks-effects-interactions;
+  ERC-20 transfer return values are checked.
+- Jobs are engine-assigned only — agents cannot self-assign or self-pay.
+- The orchestrator self-heals: a startup stuck-job sweep and a deadline watcher expire jobs locked
+  by a crashed agent, and watchers clamp their log windows so they cannot wedge.
+- For production: re-add first-depositor / donation protection (live valuation reads balances),
+  use `SafeERC20` for fee-pool payouts and registry slashing, and guard `triggerExecutorCycle()`.
 
-- ✅ `YieldVault` deposit/withdraw/rebalance are `nonReentrant` and follow
-  checks-effects-interactions; ERC-20 transfer return values are checked.
-- ✅ Jobs are **engine-assigned only** — agents can never self-assign or pay themselves.
-- ✅ The orchestrator self-heals: a startup **stuck-job sweep** + a **deadline watcher** expire
-  jobs locked by a crashed agent, and watchers clamp their log windows so they can't wedge.
-- ⚠️ Live-asset valuation reads token/adapter balances, so production deployments should re-add
-  first-depositor / donation protection.
-- ⚠️ Recommend `SafeERC20` for `FeePool.payAgent` / registry slashing in production.
-- ⚠️ `triggerExecutorCycle()` is public — a minor griefing surface, acceptable on testnet.
+See [`docs/`](./docs) for monitoring and operational details.
 
-See [`docs/`](./docs) for the full monitoring and operational notes.
-
----
-
-## 🛠 Tech Stack
+## Tech stack
 
 | Layer | Technology |
-|-------|-----------|
-| Smart contracts | Solidity 0.8.24, Hardhat, OpenZeppelin patterns |
-| Chain | Avalanche Fuji C-Chain (EVM), ethers.js v6 |
+| --- | --- |
+| Contracts | Solidity 0.8.24, Hardhat, ethers.js v6 |
+| Chain | Avalanche Fuji C-Chain (EVM) |
 | DeFi | Aave V3 (live), Benqi, custom yield adapters |
-| Agents | Node.js, event-driven + poll-based job tracking |
-| Orchestrator | TypeScript, Groq LLM (`llama-3.1-8b-instant`), rule fallback |
-| Payments | **x402** machine-payment standard, EIP-3009 receipts |
-| CLI / SDK | TypeScript npm-workspace monorepo, Commander, Inquirer, AES-256-GCM keystore |
-| Frontend | Next.js 14 / 16, React, Tailwind CSS |
-| Backend | Express, in-memory caching |
+| Agents | Node.js, event- and poll-based job tracking |
+| Orchestrator | TypeScript, Groq LLM (`llama-3.1-8b-instant`) with rule fallback |
+| Payments | x402 standard, EIP-3009 receipts |
+| CLI / SDK | TypeScript npm workspaces, Commander, Inquirer, AES-256-GCM keystore |
+| Frontend | Next.js, React, Tailwind CSS |
+| Backend | Express with in-memory caching |
 
----
+## License
 
-## 📈 Roadmap
+[MIT](./LICENSE). Built for the [Team1 Network Speedrun — June 2026](https://india.team1.network/speedrun/june-2026/submit).
 
-- [ ] More live adapters (Benqi mainnet, Trader Joe, GMX)
-- [ ] Persistent jobId-offset ledger for unlimited live runs
-- [ ] Multi-asset vaults beyond USDC
-- [ ] Agent strategy marketplace + staking-weighted reputation
-- [ ] Mainnet deployment + third-party security audit
-
----
-
-## 📄 License
-
-Released under the [MIT License](./LICENSE). Built for the
-[Team1 Network Speedrun — June 2026](https://india.team1.network/speedrun/june-2026/submit).
-
-<div align="center">
-<br/>
-<sub>🛰️ <b>Orbit Protocol</b> — your funds, always in the best orbit. Built on Avalanche.</sub>
-</div>
+<p align="center">
+  <br/>
+  <img src="./assets/avalanche-logo.png" alt="Avalanche" width="34" /><br/>
+  <sub>Built on Avalanche</sub>
+</p>
