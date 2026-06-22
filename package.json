@@ -1,0 +1,69 @@
+{
+  "name": "orbit-protocol",
+  "version": "1.0.0",
+  "description": "Orbit Protocol — Open Agent Yield Marketplace on Avalanche Fuji",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "bin": {
+    "orbit": "packages/cli/dist/index.js"
+  },
+  "scripts": {
+    "build:packages": "npm run build -w @orbit/core && npm run build -w @orbit/cli && npm run build -w @orbit/sdk",
+    "test:packages": "node --test packages/core/dist/__tests__/*.test.js",
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:unit": "hardhat test test/unit/**/*.test.js",
+    "test:integration": "hardhat test test/integration/**/*.test.js",
+    "test:e2e": "bash e2e/run-e2e.sh",
+    "deploy:local": "hardhat run scripts/deploy-local.js --network localhost",
+    "deploy": "node scripts/deploy-robust.js",
+    "setup": "node scripts/setup-robust.js",
+    "deploy:hardhat": "hardhat run scripts/deploy.js --network fuji",
+    "setup:hardhat": "hardhat run scripts/post-deploy-setup.js --network fuji",
+    "register-demo": "hardhat run scripts/register-demo-agents.js --network fuji",
+    "demo": "hardhat run scripts/run-demo.js --network fuji",
+    "seed": "node scripts/seed-vault-robust.js",
+    "seed:hardhat": "hardhat run scripts/seed-vault.js --network fuji",
+    "verify": "hardhat run scripts/verify-contracts.js --network fuji",
+    "clean": "hardhat clean",
+    "backend": "node backend/server.js",
+    "scout": "AGENT_NAME=Scout node agents/scout/index.js",
+    "executor": "AGENT_NAME=Executor node agents/executor/index.js",
+    "smart-scout": "AGENT_NAME=SmartScout node agents/scout/smart-scout.js",
+    "smart-executor": "AGENT_NAME=SmartExecutor node agents/executor/smart-executor.js",
+    "momentum-scout": "AGENT_NAME=MomentumScout node agents/scout/momentum-scout.js",
+    "adaptive-executor": "AGENT_NAME=AdaptiveExec node agents/executor/adaptive-executor.js",
+    "alpha-scout": "AGENT_NAME=AlphaScout node agents/scout/alpha-scout.js",
+    "register-agents": "node scripts/register-4-agents.js",
+    "sync-agents": "node scripts/sync-agents-to-env.js",
+    "register-extra-agents": "node scripts/register-extra-agents.js",
+    "register-alpha-scout": "node scripts/register-alpha-scout.js",
+    "migrate": "node scripts/migrate-registry-engine.js",
+    "fluctuate-apy": "node scripts/fluctuate-apy.js",
+    "e2e:fuji": "node scripts/e2e-fuji-smoke.js",
+    "redeploy:aave": "hardhat run scripts/redeploy-aave-adapter.js --network fuji",
+    "test:aave": "hardhat run scripts/test-aave-live.js --network fuji",
+    "fund-reserves": "hardhat run scripts/fund-mock-reserves.js --network fuji",
+    "orbit": "node packages/cli/dist/index.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.22.0"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.2.0",
+    "cli-table3": "^0.6.5",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.11.0",
+    "express": "^4.22.2",
+    "ora": "^5.4.1",
+    "picocolors": "^1.1.1"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=9.0.0"
+  }
+}

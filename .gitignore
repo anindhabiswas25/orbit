@@ -1,0 +1,51 @@
+# ───────────────────────── Dependencies ─────────────────────────
+node_modules/
+**/node_modules/
+.pnp
+.pnp.js
+
+# ───────────────────────── Secrets / env ────────────────────────
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# ───────────────────────── Build output ─────────────────────────
+dist/
+**/dist/
+build/
+out/
+.next/
+**/.next/
+typechain-types/
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# ───────────────────── Hardhat / Solidity ───────────────────────
+artifacts/
+cache/
+coverage/
+coverage.json
+
+# ───────────────────────── Logs ─────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ───────────────────── Working notes / archives ─────────────────
+# Large internal design dumps — kept locally, not part of the repo.
+readme.md
+orbitclisdk.md
+x402fix.md
+*.zip
+
+# ───────────────────────── OS / editor ──────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
