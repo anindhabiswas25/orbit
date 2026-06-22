@@ -1,0 +1,26 @@
+{
+  "name": "@orbit/cli",
+  "version": "1.0.0",
+  "description": "Orbit Protocol Agent CLI — register, run, and monitor agents on Avalanche Fuji",
+  "bin": { "orbit": "./dist/index.js" },
+  "main": "./dist/index.js",
+  "files": ["dist/", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": { "node": ">=20.0.0" },
+  "dependencies": {
+    "@orbit/core": "*",
+    "commander": "^8.3.0",
+    "@inquirer/prompts": "^7.2.0",
+    "chalk": "^4.1.2",
+    "ethers": "^6.11.0"
+  },
+  "optionalDependencies": {
+    "blessed": "^0.1.81"
+  },
+  "keywords": ["orbit", "avalanche", "fuji", "agent", "defi", "cli"],
+  "license": "MIT"
+}
